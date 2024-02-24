@@ -7,25 +7,25 @@ on:
 jobs:
   test-build:
     runs-on: ubuntu-latest
-
+    needs: deploy
+    
     strategy:
       matrix:
         node-version: [16.x]
-    
     steps:
       - uses: actions/checkout@v2
-      - name: Testing Build pro-Deploy
+      - name: Testing Build pre-Deploy
         uses: actions/setup-node@v2
         with:
-            node-version: ${{ matrix.node-version }}
-            cache: "npm"
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
       - run: npm i
       - run: npm run build
-    
-  deploy:
-    needs: test-build
-    runs-on: ubuntu-latest
+      - name: Deploy to Server
+        run: echo "deploy"
 
+  deploy:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [16.x]
@@ -33,14 +33,14 @@ jobs:
       - name: Build app on VM
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          port: ${{ secrets.PORT }}
+          host: ${{secrets.HOST}}
+          username: ${{secrets.USERNAME}}
+          password: ${{secrets.PASSWORD}}
+          port: ${{secrets.PORT}}
           script: |
-            eval "$ssh-agent -s"
+            eval "$(ssh-agent -s)"
             ssh-add ~/.ssh/vm_senpro_modul2_55
-            echo "Cek folder project"
+            echo "Cek folder project";
             [ ! -d "${HOME}/senpro/474928/modul02/senpro-github-action/" ] &&
             {
               echo "Repository belum di-clone. Cloning...";
@@ -52,5 +52,5 @@ jobs:
               echo "Repository sudah ada. Building...";
               cd ~/senpro/474928/modul02/senpro-github-action;
               git restore .;
-              git pull origin main;
+              git pull origin main
             }
